@@ -1,6 +1,7 @@
 # Step Functions DevOps integrations, security, and exam scenarios
 
 ## EventBridge → Step Functions (most common exam trigger)
+
 ```text
 AWS service event (Config, GuardDuty, CodeCommit, CloudWatch Alarm, CodePipeline, …)
         ↓
@@ -16,6 +17,7 @@ EventBridge needs an **IAM role** allowing `states:StartExecution` on the state 
 **Why not Lambda only?** Multiple steps, retries, branching, and visual audit in **Standard** history — Lambda would reimplement orchestration.
 
 ## Classic exam workflow: exposed credentials
+
 ```text
 CodeCommit repository state change (or Git push event)
         ↓
@@ -34,9 +36,11 @@ Related notes in your repo: **EventBridge DevOps integrations**, **5.Incident an
 **Exam trap**: **AWS Config** records compliance — it does **not** real-time block API calls. **EventBridge + Step Functions** for **immediate** response.
 
 ## CloudWatch alarms
+
 Alarm actions can go to SNS/Lambda directly.
 
 For **multi-step** runbooks (create ticket + run Lambda + update DynamoDB audit table):
+
 ```text
 CloudWatch Alarm State Change
         ↓
@@ -48,6 +52,7 @@ Step Functions
 **Exam tip**: "Alarm fires → SNS **and** run remediation Lambda **and** log incident" → **Step Functions**, not SNS alone.
 
 ## AWS Config and compliance
+
 | Approach | Use |
 | --- | --- |
 | **Config remediation** | Single SSM Automation runbook on NON_COMPLIANT |
@@ -56,10 +61,12 @@ Step Functions
 From Config notes: use native remediation for direct runbook; Step Functions when workflow needs **approvals, branching, or multiple services**.
 
 ## CodePipeline integration
+
 - CodePipeline **Invoke** can trigger Lambda; **Step Functions** often started by **EventBridge** on pipeline events (failed stage, approval needed).
 - **Notification rules** → SNS only — for Step Functions on pipeline failure, use **EventBridge** on `aws.codepipeline` events.
 
 Pattern:
+
 ```text
 Pipeline FAILED (prod stage)
         ↓
@@ -69,6 +76,7 @@ Step Functions → rollback CloudFormation / notify / open change
 ```
 
 ## SSM Automation vs Step Functions
+
 | | **SSM Automation** | **Step Functions** |
 | --- | --- | --- |
 | Focus | Operational runbooks on AWS resources | General orchestration |
@@ -78,6 +86,7 @@ Step Functions → rollback CloudFormation / notify / open change
 **Exam tip**: Config rule auto-remediate with one runbook → **SSM Automation**. Complex incident flow → **Step Functions**.
 
 ## IAM security
+
 | Role | Purpose |
 | --- | --- |
 | **State machine execution role** | Permissions for **service integrations** (Lambda invoke, SNS publish, CodeBuild start, etc.) |
@@ -85,6 +94,7 @@ Step Functions → rollback CloudFormation / notify / open change
 | **Lambda task role** | Separate from SFN — Lambda's own role for AWS API calls inside function |
 
 Least privilege:
+
 - Scope `lambda:InvokeFunction` to specific ARNs
 - Scope `sns:Publish` to specific topics
 - Avoid `*` on `iam:*` in execution role unless runbook requires it (credential revocation does)
@@ -92,12 +102,14 @@ Least privilege:
 CloudTrail logs `StartExecution`, `StartSyncExecution`, and API calls made via integrations.
 
 ## Logging and debugging
+
 - Enable **ALL** or **ERROR** level logging to CloudWatch Logs
 - **Standard** execution history — inspect failed state input/output
 - **Express** — rely on CloudWatch Logs metrics
 - **X-Ray** for tracing service integration latency
 
 ## Express vs Standard selection (decision table)
+
 | Signal | Choose |
 | --- | --- |
 | Need full execution history in console | **Standard** |
@@ -108,6 +120,7 @@ CloudTrail logs `StartExecution`, `StartSyncExecution`, and API calls made via i
 | Exactly-once execution audit for compliance | **Standard** |
 
 ## Step Functions vs SQS + Lambda
+
 | SQS + Lambda | Step Functions |
 | --- | --- |
 | Simple queue consumer | Defined graph with explicit order |
@@ -117,6 +130,7 @@ CloudTrail logs `StartExecution`, `StartSyncExecution`, and API calls made via i
 **Exam tip**: "Orchestrate" or "workflow" or "multiple steps with branching" → **Step Functions**.
 
 ## High-value exam scenarios
+
 | Scenario | Correct approach |
 | --- | --- |
 | Disable leaked IAM key + notify security | **EventBridge** → **Step Functions** → Lambda + SNS |
@@ -131,6 +145,7 @@ CloudTrail logs `StartExecution`, `StartSyncExecution`, and API calls made via i
 | Retry throttled downstream calls | **Retry** with backoff in ASL |
 
 ## Exam traps
+
 - **Lambda alone** is wrong when question requires **orchestration**, **parallel branches**, or **visual audit trail** (Standard).
 - **Express** for long-running or human approval over hours — wrong (**Standard**).
 - **CodePipeline manual approval** ≠ Step Functions — different products; both can appear in same enterprise story.
@@ -140,6 +155,7 @@ CloudTrail logs `StartExecution`, `StartSyncExecution`, and API calls made via i
 - **SWF** — legacy; modern answer is **Step Functions**.
 
 ## Integration map (quick reference)
+
 ```text
 EventBridge ──► Step Functions ──► Lambda
                          ├── SNS / SQS
@@ -150,13 +166,14 @@ EventBridge ──► Step Functions ──► Lambda
 ```
 
 ## Review checklist
-- [ ] Standard vs Express (duration, semantics, history)
-- [ ] Task, Choice, Parallel, Map, Wait, Pass
-- [ ] Retry vs Catch
-- [ ] waitForTaskToken pattern
-- [ ] .sync integrations (wait for job)
-- [ ] EventBridge as trigger + IAM roles
-- [ ] Credential exposure workflow
-- [ ] Config remediation vs Step Functions
-- [ ] vs Lambda-only vs SQS
-- [ ] Idempotency for Express and retried Tasks
+
+- [x] Standard vs Express (duration, semantics, history)
+- [x] Task, Choice, Parallel, Map, Wait, Pass
+- [x] Retry vs Catch
+- [x] waitForTaskToken pattern
+- [x] .sync integrations (wait for job)
+- [x] EventBridge as trigger + IAM roles
+- [x] Credential exposure workflow
+- [x] Config remediation vs Step Functions
+- [x] vs Lambda-only vs SQS
+- [x] Idempotency for Express and retried Tasks

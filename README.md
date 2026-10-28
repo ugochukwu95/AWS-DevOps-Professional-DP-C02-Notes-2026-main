@@ -8,17 +8,21 @@ Each service folder has short markdown notes: what the service is, how it is use
 
 | Area | Folder |
 | --- | --- |
-| CI/CD | [CodePipeline](CodePipeline), [CodeBuild](Codebuild), [CodeDeploy](CodeDeploy), [CodeArtifact](AWS%20CodeArtifact) |
+| CI/CD | [CodePipeline](CodePipeline), [CodeBuild](Codebuild), [CodeDeploy](CodeDeploy), [CodeArtifact](AWS%20CodeArtifact), [CodeGuru](CodeGuru) |
 | Infrastructure as code | [CloudFormation](AWS%20Cloudformation), [SAM and Lambda](AWS%20SAM%20and%20Lambda), [Terraform](Terraform) |
-| Compute and containers | [Elastic Beanstalk](AWS%20Elastic%20Beanstalk), [EKS](AWS%20EKS), [ECR](ECR), [EC2 Image Builder](AWS%20EC2%20Image%20Builder) |
+| Compute and containers | [Elastic Beanstalk](AWS%20Elastic%20Beanstalk), [ECS](AWS%20ECS), [EKS](AWS%20EKS), [ECR](ECR), [EC2 Image Builder](AWS%20EC2%20Image%20Builder) |
 | Orchestration | [Step Functions](Step%20Functions) |
 | Messaging and events | [SNS](AWS%20SNS), [EventBridge](AWS%20EventBridge), [Kinesis](AWS%20kinesis) |
+| API management | [API Gateway](API%20Gateway) |
 | Observability and governance | [CloudWatch](Amazon%20CloudWatch), [Config](AWS%20Config), [Systems Manager](System%20Manager) |
 | Identity and encryption | [IAM](AWS%20IAM), [KMS](AWS%20KMS) |
 | Multi-account | [Organizations](AWS%20Organizations), [Control Tower](AWS%20Control%20Tower) |
 | Network security | [WAF, Firewall Manager, and Shield](AWS%20WAF,%20AWS%20Firewall%20Manager,%20AWS%20Shield%20Advanced,%20and%20AWS%20Shield%20network%20security%20director) |
 | Data | [Aurora](Amazon%20Aurora), [ElastiCache](Amazon%20ElastiCache) |
 | Architecture | [Well-Architected Framework](AWS%20Well-Architected%20Six%20Pillars) |
+| Scaling (cross-service) | [AWS Scaling](AWS%20Scaling) |
+| Incident & event response | [Incident Response](Incident%20Response) |
+| Infrastructure automation | [Infrastructure Automation](Infrastructure%20Automation) |
 
 ## Other
 

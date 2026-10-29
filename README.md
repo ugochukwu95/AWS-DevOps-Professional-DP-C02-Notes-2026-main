@@ -28,6 +28,8 @@ Each service folder has short markdown notes: what the service is, how it is use
 
 [Andela](Andela) holds separate assessment-prep notes and small Node.js samples. It is not part of the DOP-C02 notes.
 
+[Live Tracking](Live%20Tracking) is a practical note on ride-hailing style location systems (MQTT, edge gateways, H3, Redis, Kafka/Kinesis). It is not part of the DOP-C02 notes.
+
 ## Disclaimer
 
 These notes are unofficial study material. They are not affiliated with or endorsed by Amazon Web Services. Service behavior and exam content change; confirm details against current AWS documentation.

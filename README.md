@@ -14,7 +14,7 @@ Each service folder has short markdown notes: what the service is, how it is use
 | Orchestration | [Step Functions](Step%20Functions) |
 | Messaging and events | [SNS](AWS%20SNS), [EventBridge](AWS%20EventBridge), [Kinesis](AWS%20kinesis) |
 | API management | [API Gateway](API%20Gateway) |
-| Observability and governance | [CloudWatch](Amazon%20CloudWatch), [Config](AWS%20Config), [Systems Manager](System%20Manager) |
+| Observability and governance | [CloudWatch](Amazon%20CloudWatch), [Config](AWS%20Config), [Security Hub](AWS%20Security%20Hub), [Systems Manager](System%20Manager) |
 | Identity and encryption | [IAM](AWS%20IAM), [KMS](AWS%20KMS) |
 | Multi-account | [Organizations](AWS%20Organizations), [Control Tower](AWS%20Control%20Tower) |
 | Network security | [WAF, Firewall Manager, and Shield](AWS%20WAF,%20AWS%20Firewall%20Manager,%20AWS%20Shield%20Advanced,%20and%20AWS%20Shield%20network%20security%20director) |

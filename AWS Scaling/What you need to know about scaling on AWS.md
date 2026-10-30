@@ -2,6 +2,8 @@
 
 DOP-C02 scaling questions are usually **not** “turn on Auto Scaling.” They test whether you scale the **right resource** using the **right signal** for the **workload shape**.
 
+Rule of thumb: Ask “If we’re falling behind, what number goes up first?” — scale on that metric (or a derived one like backlog per instance).
+
 ```text
 Workload produces a signal (queue depth, requests, CPU, lag, …)
         ↓

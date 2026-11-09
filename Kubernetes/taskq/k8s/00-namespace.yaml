@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: taskq
+  labels:
+    # baseline blocks privileged pods and host access but still allows debug
+    # images that run as root (netshoot). taskq itself meets restricted, so
+    # warn on anything that doesn't.
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/warn: restricted

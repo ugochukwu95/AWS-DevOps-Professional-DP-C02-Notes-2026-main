@@ -1,0 +1,6 @@
+apiVersion: v2
+name: taskq
+description: Go API, Go worker and PostgreSQL for the Kubernetes learning path
+type: application
+version: 0.1.0
+appVersion: "v1"

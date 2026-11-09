@@ -1,0 +1,8 @@
+image:
+  repository: taskq
+  tag: dev
+
+api:
+  service:
+    type: NodePort
+    nodePort: 30080

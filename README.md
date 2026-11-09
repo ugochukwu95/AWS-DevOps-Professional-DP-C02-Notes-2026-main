@@ -12,7 +12,7 @@ Each service folder has short markdown notes: what the service is, how it is use
 | Infrastructure as code | [CloudFormation](AWS%20Cloudformation), [SAM and Lambda](AWS%20SAM%20and%20Lambda), [Terraform](Terraform) |
 | Compute and containers | [Elastic Beanstalk](AWS%20Elastic%20Beanstalk), [ECS](AWS%20ECS), [EKS](AWS%20EKS), [ECR](ECR), [EC2 Image Builder](AWS%20EC2%20Image%20Builder) |
 | Orchestration | [Step Functions](Step%20Functions) |
-| Messaging and events | [SNS](AWS%20SNS), [EventBridge](AWS%20EventBridge), [Kinesis](AWS%20kinesis) |
+| Messaging and events | [SNS](AWS%20SNS), [SQS](AWS%20SQS), [EventBridge](AWS%20EventBridge), [Kinesis](AWS%20kinesis) |
 | API management | [API Gateway](API%20Gateway) |
 | Observability and governance | [CloudWatch](Amazon%20CloudWatch), [Config](AWS%20Config), [Security Hub](AWS%20Security%20Hub), [Systems Manager](System%20Manager) |
 | Identity and encryption | [IAM](AWS%20IAM), [KMS](AWS%20KMS) |
@@ -27,6 +27,8 @@ Each service folder has short markdown notes: what the service is, how it is use
 ## Other
 
 [Andela](Andela) holds separate assessment-prep notes and small Node.js samples. It is not part of the DOP-C02 notes.
+
+[Kubernetes](Kubernetes) is a separate 16-week hands-on learning path, from a local kind cluster to EKS operations and failure drills, built around one small project (a Go API, a Go worker and PostgreSQL in [Kubernetes/taskq](Kubernetes/taskq)). It is not part of the DOP-C02 notes, but it complements the [EKS](AWS%20EKS) and [Terraform](Terraform) folders.
 
 [Live Tracking](Live%20Tracking) is a practical note on ride-hailing style location systems (MQTT, edge gateways, H3, Redis, Kafka/Kinesis). It is not part of the DOP-C02 notes.
 

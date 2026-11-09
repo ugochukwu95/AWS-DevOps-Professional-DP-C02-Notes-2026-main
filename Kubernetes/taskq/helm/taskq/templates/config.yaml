@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: taskq-config
+  labels:
+    {{- include "taskq.labels" . | nindent 4 }}
+data:
+  {{- range $k, $v := .Values.worker.config }}
+  {{ $k }}: {{ $v | quote }}
+  {{- end }}
+  {{- with .Values.worker.resultsBucket }}
+  RESULTS_BUCKET: {{ . | quote }}
+  {{- end }}
+  {{- with .Values.worker.awsRegion }}
+  AWS_REGION: {{ . | quote }}
+  {{- end }}
+{{- if not .Values.database.existingSecret }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: taskq-db
+  labels:
+    {{- include "taskq.labels" . | nindent 4 }}
+type: Opaque
+stringData:
+  DATABASE_URL: {{ include "taskq.databaseUrl" . | quote }}
+{{- end }}

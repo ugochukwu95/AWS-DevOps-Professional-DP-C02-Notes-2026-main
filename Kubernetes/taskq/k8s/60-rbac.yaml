@@ -1,0 +1,31 @@
+# Read-only access to the taskq namespace for people in the taskq-viewers group.
+# Test without creating users: kubectl auth can-i list pods -n taskq --as=jane --as-group=taskq-viewers
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: taskq-viewer
+  namespace: taskq
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "pods/log", "services", "endpoints", "configmaps", "events", "persistentvolumeclaims"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets", "statefulsets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["discovery.k8s.io"]
+    resources: ["endpointslices"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: taskq-viewers
+  namespace: taskq
+subjects:
+  - kind: Group
+    name: taskq-viewers
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: taskq-viewer
+  apiGroup: rbac.authorization.k8s.io

@@ -1,0 +1,23 @@
+# Replace the placeholders with `terraform output` values.
+image:
+  repository: <account>.dkr.ecr.<region>.amazonaws.com/taskq
+  tag: v1
+
+api:
+  ingress:
+    enabled: true
+    className: alb
+    annotations:
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/target-type: ip
+      alb.ingress.kubernetes.io/healthcheck-path: /readyz
+      alb.ingress.kubernetes.io/target-group-attributes: deregistration_delay.timeout_seconds=30
+  hpa:
+    enabled: true
+
+worker:
+  resultsBucket: <results_bucket output>
+  awsRegion: eu-west-1
+
+postgres:
+  storageClass: gp3

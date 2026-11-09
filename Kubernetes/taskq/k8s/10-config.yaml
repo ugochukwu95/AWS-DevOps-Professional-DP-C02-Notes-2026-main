@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: taskq-config
+  namespace: taskq
+data:
+  POLL_INTERVAL: "1s"
+  WORK_DURATION: "500ms"
+  # Fault injection for notes 04 and 18. Keep at zero normally.
+  BURN_CPU: "0s"
+  LEAK_MB_PER_JOB: "0"
+---
+# Local-only credentials. Real environments create this Secret outside Git
+# (kubectl create secret, External Secrets, or Sealed Secrets).
+apiVersion: v1
+kind: Secret
+metadata:
+  name: taskq-db
+  namespace: taskq
+type: Opaque
+stringData:
+  DATABASE_URL: postgres://taskq:taskq@postgres.taskq.svc.cluster.local:5432/taskq?sslmode=disable

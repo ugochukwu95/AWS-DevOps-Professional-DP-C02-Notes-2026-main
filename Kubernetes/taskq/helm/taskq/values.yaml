@@ -1,0 +1,62 @@
+# Resource names are fixed (api, worker, postgres) so they match the notes and the
+# Pod Identity association for ServiceAccount "worker". One release per namespace.
+
+image:
+  repository: taskq
+  tag: dev
+  pullPolicy: IfNotPresent
+
+database:
+  # Name of an existing Secret with a DATABASE_URL key. Takes precedence over everything below.
+  existingSecret: ""
+  # Explicit URL (for example RDS). Empty + postgres.enabled = point at the in-chart Postgres.
+  url: ""
+
+api:
+  replicas: 2
+  resources:
+    requests: { cpu: 50m, memory: 64Mi }
+    limits: { cpu: 500m, memory: 128Mi }
+  service:
+    type: ClusterIP
+    nodePort: null
+  ingress:
+    enabled: false
+    className: alb
+    annotations: {}
+  hpa:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 70
+
+worker:
+  replicas: 2
+  resources:
+    requests: { cpu: 50m, memory: 64Mi }
+    limits: { cpu: 500m, memory: 128Mi }
+  config:
+    POLL_INTERVAL: "1s"
+    WORK_DURATION: "500ms"
+    BURN_CPU: "0s"
+    LEAK_MB_PER_JOB: "0"
+  resultsBucket: ""
+  awsRegion: ""
+
+pdb:
+  enabled: true
+
+rbac:
+  viewerGroup: taskq-viewers
+
+postgres:
+  enabled: true
+  image: postgres:17
+  user: taskq
+  password: taskq
+  database: taskq
+  storageClass: ""
+  size: 1Gi
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits: { memory: 512Mi }

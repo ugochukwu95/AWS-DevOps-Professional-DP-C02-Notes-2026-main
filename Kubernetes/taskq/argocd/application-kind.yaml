@@ -1,0 +1,29 @@
+# Argo CD Application for the local kind cluster (note 15).
+# Argo CD pulls from Git: commit and push chart changes before expecting a sync.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: taskq
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/ugochukwu95/AWS-DevOps-Professional-DP-C02-Notes-2026-main.git
+    targetRevision: main
+    path: Kubernetes/taskq/helm/taskq
+    helm:
+      valueFiles:
+        - values-kind.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: taskq
+  syncPolicy:
+    automated:
+      prune: true      # delete resources removed from Git
+      selfHeal: true   # revert manual kubectl changes
+    syncOptions:
+      - CreateNamespace=true
+    managedNamespaceMetadata:
+      labels:
+        pod-security.kubernetes.io/enforce: baseline
+        pod-security.kubernetes.io/warn: restricted

@@ -103,6 +103,14 @@ Each pillar has **design principles** (official AWS wording summarized below) an
 | **Consider mechanical sympathy** | Match access patterns to data stores (cache, columnar, object, relational). |
 | **Review and optimize over time** | Performance is not “set once at launch.” |
 
+“Match access patterns to data stores” means choosing storage based on how your application reads and writes data.
+| Data store | Best suited to | Example |
+|---|---|---|
+| **Cache** | Frequent, fast access to reusable data | Cache product details to reduce database queries. |
+| **Columnar** | Analytical queries across many rows but only a few columns | Calculate monthly revenue by country across millions of sales records. |
+| **Object** | Storing files and large blobs, accessed by a key | Store images, videos, backups, and reports in Amazon S3. |
+| **Relational** | Structured records requiring relationships, transactions, and integrity | Store customers, orders, and payments in PostgreSQL. |
+
 ### Typical AWS capabilities
 - **Right-sizing**: Compute Optimizer, CloudWatch metrics, load testing
 - **Caching**: ElastiCache, CloudFront, DAX, API Gateway caching

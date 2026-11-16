@@ -33,8 +33,25 @@ docker pull nicolaka/netshoot   # dig, curl, ss, tcpdump, ip, iptables, nc...
 | **Signals** | `SIGTERM` (15) asks a process to stop and can be handled. `SIGKILL` (9) can't be caught. `docker stop` and the kubelet send SIGTERM, wait for the grace period (10s Docker, 30s Kubernetes), then SIGKILL |
 | **PID 1 is special** | The kernel does **not** apply default signal actions to PID 1. If your program doesn't install a SIGTERM handler, SIGTERM is ignored and you always wait for the SIGKILL |
 | **Shell vs exec form** | `ENTRYPOINT /api` (shell form) runs `/bin/sh -c /api`, so the shell is PID 1 and may not forward signals. `ENTRYPOINT ["/api"]` (exec form) makes your binary PID 1 |
-| **Zombies** | Exited children that nobody `wait()`ed for. PID 1 must reap them. Go binaries that don't fork are fine. Shell-script entrypoints that spawn children need `tini` or `--init` |
+| **Zombies** | Exited children that nobody `wait()`ed for. PID 1 must reap them. See [Zombie processes](#zombie-processes) below |
 | **Exit codes** | `0` success, `1` app error, `137` = 128+9 (SIGKILL, often OOM), `143` = 128+15 (SIGTERM) |
+
+### Zombie processes
+Linux keeps processes in a parent–child tree. The first process the kernel starts in a namespace has PID 1. In a container, whatever you set as `ENTRYPOINT` or `CMD` (in exec form) is usually PID 1 in that namespace.
+
+**Exited children that nobody `wait()`ed for.** When a process creates a child, the child eventually exits. The kernel does not remove it from the process table immediately: it leaves a small record with the exit status. That state is a **zombie** (the process is dead, but its slot still exists). The parent is supposed to call `wait()` (or `waitpid()`) to read the status; then the kernel drops the zombie. If the parent never waits, the zombie stays until the parent exits or is reaped by someone else. Zombies use little memory, but each one holds a PID, and a container has a PID limit.
+
+**PID 1 must reap them.** If a parent exits while a child is still running, the child becomes an **orphan**. Orphans are adopted by PID 1 in that namespace. PID 1 is then responsible for calling `wait()` when those children finish. Cleaning up dead children like that is **reaping**. On a normal Linux host, PID 1 is an init system (for example `systemd`) built to reap orphans. Inside a container, your application is often PID 1, and most apps are not init systems: they do not loop on `wait()` for random adopted children.
+
+**Go binaries that don't fork are fine.** A typical Go server (taskq's `/api` and `/worker`) uses goroutines and does not spawn separate OS child processes for normal work. No children means no zombies from your app. Running the binary directly as PID 1 (exec-form `ENTRYPOINT ["/api"]`) is safe for that reason.
+
+**Shell-script entrypoints that spawn children need `tini` or `--init`.** Many images use `#!/bin/sh` entrypoints that export variables and then `exec` the real binary, or run stacks that fork often (Node, Python, some web servers). A bare shell is a poor PID 1: children orphaned under it may never get reaped, zombies accumulate, and you can hit the PID limit or see odd behavior under load. **tini** is a minimal init meant to be PID 1: it forwards signals (for example `SIGTERM` to your app) and reaps zombies. `docker run --init` injects Docker's bundled tini the same way. Kubernetes has no direct equivalent of `--init`; use an image that already uses exec form, add `tini` as the entrypoint with your app as its child, or rely on a wrapper only when you actually fork children.
+
+| Situation | Typical fix |
+| --- | --- |
+| Single compiled binary, no `fork`/`exec` | Exec-form `ENTRYPOINT`, no tini (taskq) |
+| Shell wrapper or process that forks workers | `tini` as PID 1, or `docker run --init` locally |
+| Zombie pile-up inside a running container | `ps aux` shows `<defunct>`; fix the entrypoint, not just restart |
 
 taskq handles this with `signal.NotifyContext(ctx, SIGINT, SIGTERM)`: the api calls `srv.Shutdown()`, and the worker finishes its current job. See [cmd/api/main.go](taskq/cmd/api/main.go).
 
@@ -57,10 +74,20 @@ kill -TERM <pid>                                          # watch terminal 1 log
 ```
 
 ### Lab 1.2: Signals and PID 1 in a container
+
+If `docker run -p 8080:8080` fails with **port is already allocated**, something on your Mac already listens on that port: often **kind** (`taskq-control-plane` maps host `8080`), or **`make run-api`** (`:8080`) and **`make run-worker`** (`:8081` for health). Stop those processes or pick another **host** port. The container still listens on **8080 inside**; only the left side of `-p` changes:
+
+```bash
+lsof -nP -iTCP:8080 -sTCP:LISTEN    # who owns the port?
+docker rm -f api                    # remove a container left in Created state after a failed run
+```
+
 ```bash
 docker build -t taskq:dev .
-docker run -d --name api --network kind -p 8080:8080 \
+HOST_PORT=18080                     # any free port from lsof
+docker run -d --name api --network kind -p ${HOST_PORT}:8080 \
   -e DATABASE_URL='postgres://taskq:taskq@taskq-pg:5432/taskq?sslmode=disable' taskq:dev
+curl -s localhost:${HOST_PORT}/healthz
 
 docker top api                 # PID as seen from the VM: a normal process
 docker exec -it api sh         # fails: distroless has no shell (you'll use nsenter / kubectl debug instead)
@@ -73,19 +100,39 @@ docker rm api
 Now break it on purpose: write a two-line Dockerfile with `FROM alpine` and `ENTRYPOINT sleep 1000` (shell form, no handler). Run `time docker stop` on it. It takes 10 seconds and exits with 137. Explain why.
 
 ### Lab 1.3: See the namespaces
+Use the same `HOST_PORT` as lab 1.2 if `8080` is taken.
+
 ```bash
-docker run -d --name api --network kind -p 8080:8080 \
+docker run -d --name api --network kind -p ${HOST_PORT:-8080}:8080 \
   -e DATABASE_URL='postgres://taskq:taskq@taskq-pg:5432/taskq?sslmode=disable' taskq:dev
 PID=$(docker inspect -f '{{.State.Pid}}' api)
-
-# Inside the VM shell from "Where Linux is on a Mac":
-ls -l /proc/$PID/ns              # net, pid, mnt, uts, ipc, cgroup: compare to `ls -l /proc/1/ns`
-cat /proc/$PID/cgroup            # its cgroup path
-nsenter -t $PID -n ip addr       # the container's network namespace: eth0 with a 172.x IP
-nsenter -t $PID -n ss -ltn       # listening on *:8080
+echo "PID $PID is valid inside Docker Desktop's Linux VM, not on macOS"
 ```
 
-`nsenter -t $PID -n` runs a command from the VM inside the container's **network** namespace only, so you get the VM's tools with the container's view of the network. `kubectl debug` (note 10) does the same thing for pods.
+**macOS has no `/proc`.** If `ls /proc/$PID/ns` fails with *No such file or directory*, you ran the lab in Terminal on the Mac. `docker inspect` returns the container's PID **in the VM**. Run the Linux commands through a container that shares the VM's PID namespace:
+
+```bash
+PID=$(docker inspect -f '{{.State.Pid}}' api)
+
+docker run --rm --privileged --pid=host alpine sh -c "
+  ls -l /proc/$PID/ns
+  cat /proc/$PID/cgroup | head -3
+"
+
+docker run --rm --privileged --pid=host alpine nsenter -t $PID -n ip addr
+docker run --rm --privileged --pid=host alpine nsenter -t $PID -n ss -ltn   # *:8080
+```
+
+Compare with PID 1 (the VM init inside Docker Desktop): `docker run --rm --privileged --pid=host alpine ls -l /proc/1/ns`.
+
+**Without `nsenter`**, share the container's network namespace instead:
+
+```bash
+docker run --rm --network container:api nicolaka/netshoot ip addr
+docker run --rm --network container:api nicolaka/netshoot ss -ltn
+```
+
+`nsenter -t $PID -n` runs a command inside the container's **network** namespace only. `kubectl debug` (note 10) does the same thing for pods.
 
 ## Part 2: Container networking
 

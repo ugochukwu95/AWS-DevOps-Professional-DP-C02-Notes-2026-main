@@ -15,8 +15,9 @@ Learn this table by heart. "Timeout" vs "refused" alone tells you a lot.
 ## Part 1: DNS
 
 ### Concepts
-- **`/etc/resolv.conf`** tells the resolver which nameserver to ask (`nameserver`), which suffixes to try (`search`), and how (`options ndots:N`).
-- **`ndots`**: if a name has fewer than N dots, the search suffixes are tried **first**. In Kubernetes, `ndots:5` means `api.example.com` (2 dots) is first tried as `api.example.com.taskq.svc.cluster.local`, then `.svc.cluster.local`, then `.cluster.local`, and only then as-is. A trailing dot (`api.example.com.`) skips the search list.
+
+- `/etc/resolv.conf` tells the resolver which nameserver to ask (`nameserver`), which suffixes to try (`search`), and how (`options ndots:N`).
+- `ndots`: if a name has fewer than N dots, the search suffixes are tried **first**. In Kubernetes, `ndots:5` means `api.example.com` (2 dots) is first tried as `api.example.com.taskq.svc.cluster.local`, then `.svc.cluster.local`, then `.cluster.local`, and only then as-is. A trailing dot (`api.example.com.`) skips the search list.
 - **Record types you'll meet**: `A`/`AAAA` (IP), `CNAME` (alias, which is what `ExternalName` Services are), `SRV` (port and host, which Kubernetes creates for named Service ports), `PTR` (reverse).
 - **TTL and caching**: a stale cache can keep sending you to an old IP. CoreDNS caches for 30s by default.
 
@@ -31,6 +32,7 @@ Learn this table by heart. "Timeout" vs "refused" alone tells you a lot.
 | `postgres.taskq.svc.cluster.local` for a headless Service | The pod IPs directly (no ClusterIP) |
 
 ### Lab 3.1: Docker DNS
+
 ```bash
 docker run --rm --network kind nicolaka/netshoot cat /etc/resolv.conf
 docker run --rm --network kind nicolaka/netshoot dig taskq-pg +short
@@ -39,6 +41,7 @@ docker run --rm nicolaka/netshoot dig example.com +trace | tail -5
 ```
 
 ### Lab 3.2: Kubernetes DNS (after note 00 step 7)
+
 ```bash
 kubectl -n taskq run dns --rm -it --image=nicolaka/netshoot --restart=Never -- bash
 # inside the pod:
@@ -63,12 +66,14 @@ kubectl -n kube-system logs -l k8s-app=kube-dns
 ## Part 2: Routing
 
 ### Concepts
+
 - A **route table** says: for destination X, send via interface Y (and gateway Z). The most specific prefix wins, and `default` is the catch-all.
-- **`ip route get <ip>`** answers "which way will a packet to this IP go?" Always ask that before guessing.
+- `ip route get <ip>` answers "which way will a packet to this IP go?" Always ask that before guessing.
 - **NAT** rewrites addresses: DNAT for inbound (published ports, Services), SNAT/masquerade for outbound (containers going to the internet, pods going to an off-cluster database).
 - **Pod networking (kind)**: each node gets a pod CIDR (for example `10.244.1.0/24`). kindnet adds routes on each node, such as "10.244.2.0/24 via the IP of taskq-worker2".
 
 ### Lab 3.3: Read the routes
+
 ```bash
 # A pod's view
 kubectl -n taskq run net --rm -it --image=nicolaka/netshoot --restart=Never -- ip route
@@ -79,6 +84,7 @@ docker exec taskq-worker ip route get 10.244.2.5     # which interface and next 
 ```
 
 ### Lab 3.4: Timeout vs refused
+
 ```bash
 kubectl -n taskq run net --rm -it --image=nicolaka/netshoot --restart=Never -- bash
 nc -vz -w3 postgres 5432        # open
@@ -89,6 +95,7 @@ nc -vz -w3 10.255.255.1 5432    # timeout: no route or dropped
 ## Part 3: TLS
 
 ### Concepts
+
 - **What TLS gives you**: encryption, integrity, and **server identity** (the certificate proves "I am `api.taskq.local`" because a CA you trust signed it).
 - **The handshake (TLS 1.3, simplified)**: ClientHello (SNI, which is the hostname you want, and the supported ciphers) → ServerHello and the certificate chain → the client verifies the chain to a trusted root, verifies the hostname against the SAN, and checks validity dates → keys are agreed and encrypted traffic starts.
 - **SAN (Subject Alternative Name)**: the hostnames a certificate is valid for. The CN field is ignored by modern clients. Most "valid for X, not Y" errors are a SAN mismatch.
@@ -97,6 +104,7 @@ nc -vz -w3 10.255.255.1 5432    # timeout: no route or dropped
 - **Postgres TLS**: `sslmode=disable|require|verify-full`. Only `verify-full` checks identity.
 
 ### Lab 3.5: Inspect real certificates
+
 ```bash
 openssl s_client -connect example.com:443 -servername example.com </dev/null 2>/dev/null | head -20
 openssl s_client -connect example.com:443 -servername example.com </dev/null 2>/dev/null \
@@ -105,6 +113,7 @@ curl -v https://example.com 2>&1 | grep -E 'SSL|subject|issuer|expire'
 ```
 
 ### Lab 3.6: A self-signed CA for the api
+
 Make your own CA, issue a certificate for `api.taskq.local`, and terminate TLS in front of the api with a tiny Go reverse proxy, or just inspect the certificate.
 
 ```bash
@@ -126,7 +135,9 @@ kill %1
 In Kubernetes this pair becomes a `kubernetes.io/tls` Secret: `kubectl create secret tls api-tls --cert=api.crt --key=api.key`.
 
 ## Readiness check for Weeks 1-2
+
 Without notes, on a whiteboard or in your journal:
+
 1. Trace `curl localhost:8080/jobs` to the Go process when taskq runs (a) as a Docker container, and (b) behind a kind NodePort Service. Name every hop and the Linux feature behind it (port forwarding, DNAT, bridge, veth, netns, socket).
 2. Then work through this checklist when it fails:
 

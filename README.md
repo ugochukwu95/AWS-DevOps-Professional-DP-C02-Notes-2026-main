@@ -28,6 +28,8 @@ Each service folder has short markdown notes: what the service is, how it is use
 
 [Andela](Andela) holds separate assessment-prep notes and small Node.js samples. It is not part of the DOP-C02 notes.
 
+[Mercor](Mercor) holds software-engineering interview prep for Mercor’s loop (spoken screen, coding drills, job-scheduler design). It is not part of the DOP-C02 notes.
+
 [Kubernetes](Kubernetes) is a separate 16-week hands-on learning path, from a local kind cluster to EKS operations and failure drills, built around one small project (a Go API, a Go worker and PostgreSQL in [Kubernetes/taskq](Kubernetes/taskq)). It is not part of the DOP-C02 notes, but it complements the [EKS](AWS%20EKS) and [Terraform](Terraform) folders.
 
 [Live Tracking](Live%20Tracking) is a practical note on ride-hailing style location systems (MQTT, edge gateways, H3, Redis, Kafka/Kinesis). It is not part of the DOP-C02 notes.
